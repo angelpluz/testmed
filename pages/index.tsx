@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 export default function HomePage() {
-  const [message, setMessage] = useState('ยินดีต้อนรับสู่แบบสอบถามของเรา');
+  const [message] = useState('ยินดีต้อนรับสู่แบบสอบถามของเรา');
 
   return (
     <div>
