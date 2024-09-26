@@ -31,7 +31,38 @@ export default function EvaluationPage() {
 
   const [priceScoreA, setPriceScoreA] = useState<number | null>(null); // Allow number or null
   const [priceScoreB, setPriceScoreB] = useState<number | null>(null); // Allow number or null
-
+  const saveDataToCSV = async () => {
+    console.log({
+      evaluationsA,
+      evaluationsB,
+      priceA,
+      priceB,
+      finalScoreA,  // ลองดูค่าที่ได้ที่นี่
+      finalScoreB   // ลองดูค่าที่ได้ที่นี่
+    });
+    
+  
+    const response = await fetch('/api/form', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        evaluationsA,
+        evaluationsB,
+        priceA,
+        priceB,
+        finalScoreA: finalScoreA || 0,
+        finalScoreB: finalScoreB || 0,
+      }),
+    });
+  
+    if (response.ok) {
+      alert('Data saved successfully!');
+    } else {
+      alert('Failed to save data!');
+    }
+  };
   const handleEvaluationChange = (field: string, value: number) => {
     setCurrentEvaluation({ ...currentEvaluation, [field]: value });
   };
@@ -39,6 +70,8 @@ export default function EvaluationPage() {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+
+    
     // คำนวณคะแนนรวมสำหรับผู้ใช้ปัจจุบัน
     const totalScore =
       Number(currentEvaluation.packaging) +
@@ -110,14 +143,18 @@ export default function EvaluationPage() {
     return productScore + priceScore; // รวมคะแนนราคากับคะแนนผลิตภัณฑ์
   };
   const handleFinalCalculation = () => {
-    calculatePriceScore(); // เรียกใช้ฟังก์ชัน calculatePriceScore เพื่อคำนวณคะแนนราคา
-  
+    // เรียกใช้ calculatePriceScore เพื่อคำนวณคะแนนราคา
+    calculatePriceScore();
+
     if (averageScoreA && priceScoreA !== null) {
       setFinalScoreA(calculateFinalScore(priceScoreA, averageScoreA)); // Now it's safe to call
     }
     if (averageScoreB && priceScoreB !== null) {
       setFinalScoreB(calculateFinalScore(priceScoreB, averageScoreB)); // Now it's safe to call
     }
+
+    // หลังจากคำนวณเสร็จ ให้บันทึกข้อมูลลง CSV
+    saveDataToCSV();
   };
   
 
@@ -209,7 +246,8 @@ export default function EvaluationPage() {
 
       {/* คำนวณคะแนนรวมสุดท้ายเมื่อมีราคาทั้ง A และ B */}
       {priceA && priceB && (
-        <button onClick={handleFinalCalculation}>คำนวณคะแนนรวมสุดท้าย</button>
+        
+        <button onClick={handleFinalCalculation}>คำนวณคะแนนรวมสุดท้ายและบันทึกข้อมูล</button>
       )}
 
       {/* แสดงคะแนนรวมสุดท้าย */}
@@ -234,6 +272,7 @@ export default function EvaluationPage() {
           ).toFixed(2)}%</p>
         </div>
       )}
+
     </div>
   );
 }
