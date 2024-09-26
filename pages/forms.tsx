@@ -1,33 +1,42 @@
 import { useState } from 'react';
 
+interface Evaluation {
+  packaging: string;
+  sharpness: string;
+  flexibility: string;
+  strength: string;
+  totalScore: number;
+}
+
 export default function EvaluationPage() {
   const [currentUser, setCurrentUser] = useState(1); // นับผู้ใช้คนปัจจุบัน
-  const [evaluationsA, setEvaluationsA] = useState([]); // เก็บข้อมูลของผู้ใช้ทั้งหมดสำหรับชุด A
-  const [evaluationsB, setEvaluationsB] = useState([]); // เก็บข้อมูลของผู้ใช้ทั้งหมดสำหรับชุด B
-  const [currentEvaluation, setCurrentEvaluation] = useState({
+  const [evaluationsA, setEvaluationsA] = useState<Evaluation[]>([]); // เก็บข้อมูลของผู้ใช้ทั้งหมดสำหรับชุด A
+  const [evaluationsB, setEvaluationsB] = useState<Evaluation[]>([]); // เก็บข้อมูลของผู้ใช้ทั้งหมดสำหรับชุด B
+  const [currentEvaluation, setCurrentEvaluation] = useState<Evaluation>({
     packaging: '',
     sharpness: '',
     flexibility: '',
     strength: '',
+    totalScore: 0,
   });
   const [group, setGroup] = useState('A'); // ระบุว่ากำลังประเมินชุดไหน A หรือ B
 
-  const [averageScoreA, setAverageScoreA] = useState(null); // ค่าเฉลี่ยสำหรับชุด A
-  const [averageScoreB, setAverageScoreB] = useState(null); // ค่าเฉลี่ยสำหรับชุด B
+  const [averageScoreA, setAverageScoreA] = useState<number | null>(null); // correct type
+  const [averageScoreB, setAverageScoreB] = useState<number | null>(null); // correct type
 
   const [priceA, setPriceA] = useState(''); // ราคา บริษัท A
   const [priceB, setPriceB] = useState(''); // ราคา บริษัท B
-  const [finalScoreA, setFinalScoreA] = useState(null); // คะแนนรวมสุดท้ายสำหรับ A
-  const [finalScoreB, setFinalScoreB] = useState(null); // คะแนนรวมสุดท้ายสำหรับ B
+  const [finalScoreA, setFinalScoreA] = useState<number | null>(null); // Allow number or null
+  const [finalScoreB, setFinalScoreB] = useState<number | null>(null); // Allow number or null
 
-  const [priceScoreA, setPriceScoreA] = useState(null);
-  const [priceScoreB, setPriceScoreB] = useState(null);
+  const [priceScoreA, setPriceScoreA] = useState<number | null>(null); // Allow number or null
+  const [priceScoreB, setPriceScoreB] = useState<number | null>(null); // Allow number or null
 
-  const handleEvaluationChange = (field, value) => {
+  const handleEvaluationChange = (field: string, value: number) => {
     setCurrentEvaluation({ ...currentEvaluation, [field]: value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     // คำนวณคะแนนรวมสำหรับผู้ใช้ปัจจุบัน
@@ -46,7 +55,13 @@ export default function EvaluationPage() {
     }
 
     // รีเซ็ตข้อมูลสำหรับผู้ใช้ถัดไป
-    setCurrentEvaluation({ packaging: '', sharpness: '', flexibility: '', strength: '' });
+    setCurrentEvaluation({
+      packaging: '',
+      sharpness: '',
+      flexibility: '',
+      strength: '',
+      totalScore: 0, // Reset totalScore to 0 or another default value
+    });
 
     // ไปยังผู้ใช้ถัดไป
     if (currentUser < 5) {
@@ -62,7 +77,7 @@ export default function EvaluationPage() {
     }
   };
 
-  const calculateAverage = (evaluations, setAverageScore) => {
+  const calculateAverage = (evaluations: Evaluation[], setAverageScore: React.Dispatch<React.SetStateAction<number | null>>) => {
     // คำนวณค่าเฉลี่ยจากคะแนนรวมของผู้ใช้ทั้งหมด
     const totalScores = evaluations.reduce((acc, evalObj) => acc + evalObj.totalScore, 0);
     const avgScore = totalScores / evaluations.length;
@@ -90,21 +105,21 @@ export default function EvaluationPage() {
     setPriceScoreB((scoreB / 100) * 40); // แปลงคะแนนเป็น 40%
   };
 
-  const calculateFinalScore = (priceScore, avgScore) => {
+  const calculateFinalScore = (priceScore: number, avgScore: number) => {
     const productScore = (avgScore / 100) * 60; // แปลงคะแนนผลิตภัณฑ์เป็น 60%
     return productScore + priceScore; // รวมคะแนนราคากับคะแนนผลิตภัณฑ์
   };
-
   const handleFinalCalculation = () => {
-    calculatePriceScore();
-
-    if (averageScoreA) {
-      setFinalScoreA(calculateFinalScore(priceScoreA, averageScoreA));
+    calculatePriceScore(); // เรียกใช้ฟังก์ชัน calculatePriceScore เพื่อคำนวณคะแนนราคา
+  
+    if (averageScoreA && priceScoreA !== null) {
+      setFinalScoreA(calculateFinalScore(priceScoreA, averageScoreA)); // Now it's safe to call
     }
-    if (averageScoreB) {
-      setFinalScoreB(calculateFinalScore(priceScoreB, averageScoreB));
+    if (averageScoreB && priceScoreB !== null) {
+      setFinalScoreB(calculateFinalScore(priceScoreB, averageScoreB)); // Now it's safe to call
     }
   };
+  
 
   return (
     <div>
@@ -112,19 +127,35 @@ export default function EvaluationPage() {
       <form onSubmit={handleSubmit}>
         <div>
           <label>ภาชนะบรรจุภัณฑ์ (10 คะแนน):</label>
-          <input type="number" value={currentEvaluation.packaging} onChange={(e) => handleEvaluationChange('packaging', e.target.value)} />
+          <input
+            type="number"
+            value={currentEvaluation.packaging}
+            onChange={(e) => handleEvaluationChange('packaging', Number(e.target.value))}
+          />
         </div>
         <div>
           <label>ความคมของเข็ม (30 คะแนน):</label>
-          <input type="number" value={currentEvaluation.sharpness} onChange={(e) => handleEvaluationChange('sharpness', e.target.value)} />
+          <input
+            type="number"
+            value={currentEvaluation.sharpness}
+            onChange={(e) => handleEvaluationChange('sharpness', Number(e.target.value))}
+          />
         </div>
         <div>
           <label>ความเหนียวและลื่นของเส้นไหม (30 คะแนน):</label>
-          <input type="number" value={currentEvaluation.flexibility} onChange={(e) => handleEvaluationChange('flexibility', e.target.value)} />
+          <input
+            type="number"
+            value={currentEvaluation.flexibility}
+            onChange={(e) => handleEvaluationChange('flexibility', Number(e.target.value))}
+          />
         </div>
         <div>
           <label>ความแข็งแรงระหว่างเข็มกับไหม (30 คะแนน):</label>
-          <input type="number" value={currentEvaluation.strength} onChange={(e) => handleEvaluationChange('strength', e.target.value)} />
+          <input
+            type="number"
+            value={currentEvaluation.strength}
+            onChange={(e) => handleEvaluationChange('strength', Number(e.target.value))}
+          />
         </div>
 
         <button type="submit">บันทึกการประเมินผู้ใช้ลำดับ {currentUser}</button>
@@ -156,23 +187,26 @@ export default function EvaluationPage() {
           <h3>คะแนนสุดท้ายจากการประเมิน (คิดเป็น 60%): {(averageScoreB / 100 * 60).toFixed(2)}</h3>
         </div>
       )}
-{evaluationsA.length > 0 && (
-  <div>
-    <h2>ผลการประเมินจากชุด A แต่ละคน</h2>
-    {evaluationsA.map((evalObj, index) => (
-      <p key={index}>ผู้ใช้ลำดับ {index + 1}: {evalObj.totalScore} คะแนน</p>
-    ))}
-  </div>
-)}
 
-{evaluationsB.length > 0 && (
-  <div>
-    <h2>ผลการประเมินจากชุด B แต่ละคน</h2>
-    {evaluationsB.map((evalObj, index) => (
-      <p key={index}>ผู้ใช้ลำดับ {index + 1}: {evalObj.totalScore} คะแนน</p>
-    ))}
-  </div>
-)}
+      {/* แสดงข้อมูลของผู้ใช้แต่ละคน */}
+      {evaluationsA.length > 0 && (
+        <div>
+          <h2>ผลการประเมินจากชุด A แต่ละคน</h2>
+          {evaluationsA.map((evalObj, index) => (
+            <p key={index}>ผู้ใช้ลำดับ {index + 1}: {evalObj.totalScore} คะแนน</p>
+          ))}
+        </div>
+      )}
+
+      {evaluationsB.length > 0 && (
+        <div>
+          <h2>ผลการประเมินจากชุด B แต่ละคน</h2>
+          {evaluationsB.map((evalObj, index) => (
+            <p key={index}>ผู้ใช้ลำดับ {index + 1}: {evalObj.totalScore} คะแนน</p>
+          ))}
+        </div>
+      )}
+
       {/* คำนวณคะแนนรวมสุดท้ายเมื่อมีราคาทั้ง A และ B */}
       {priceA && priceB && (
         <button onClick={handleFinalCalculation}>คำนวณคะแนนรวมสุดท้าย</button>
@@ -183,27 +217,23 @@ export default function EvaluationPage() {
         <div>
           <h3>คะแนนรวมสุดท้ายสำหรับ A: {finalScoreA.toFixed(2)}</h3>
           <p>คะแนนจากราคา (คิดเป็น 40%): {priceScoreA?.toFixed(2)}%</p>
-          <p>คะแนนจากการประเมิน (คิดเป็น 60%): {(averageScoreA / 100 * 60).toFixed(2)}%</p>
+          <p>คะแนนจากการประเมิน (คิดเป็น 60%): {(averageScoreA ? (averageScoreA / 100 * 60).toFixed(2) : '0.00')}%</p>
+          <p>คะแนนร่วม (ราคา + ประเมิน): {((priceScoreA !== null ? parseFloat(priceScoreA.toFixed(2)) : 0) +
+            (averageScoreA !== null ? parseFloat((averageScoreA / 100 * 60).toFixed(2)) : 0)).toFixed(2)}%</p>
         </div>
       )}
 
-{finalScoreA && (
-  <div>
-    <h3>คะแนนรวมสุดท้ายสำหรับ A: {finalScoreA.toFixed(2)}</h3>
-    <p>คะแนนจากราคา (คิดเป็น 40%): {priceScoreA.toFixed(2)}%</p>
-    <p>คะแนนจากการประเมิน (คิดเป็น 60%): {(averageScoreA / 100 * 60).toFixed(2)}%</p>
-    <p>คะแนนร่วม (ราคา + ประเมิน): {(parseFloat(priceScoreA) + parseFloat((averageScoreA / 100 * 60).toFixed(2))).toFixed(2)}%</p>
-  </div>
-)}
-
-{finalScoreB && (
-  <div>
-    <h3>คะแนนรวมสุดท้ายสำหรับ B: {finalScoreB.toFixed(2)}</h3>
-    <p>คะแนนจากราคา (คิดเป็น 40%): {priceScoreB.toFixed(2)}%</p>
-    <p>คะแนนจากการประเมิน (คิดเป็น 60%): {(averageScoreB / 100 * 60).toFixed(2)}%</p>
-    <p>คะแนนร่วม (ราคา + ประเมิน): {(parseFloat(priceScoreB) + parseFloat((averageScoreB / 100 * 60).toFixed(2))).toFixed(2)}%</p>
-  </div>
-)}
+      {finalScoreB && (
+        <div>
+          <h3>คะแนนรวมสุดท้ายสำหรับ B: {finalScoreB !== null ? finalScoreB.toFixed(2) : 'N/A'}</h3>
+          <p>คะแนนจากราคา (คิดเป็น 40%): {priceScoreB !== null ? priceScoreB.toFixed(2) : 'N/A'}%</p>
+          <p>คะแนนจากการประเมิน (คิดเป็น 60%): {averageScoreB !== null ? (averageScoreB / 100 * 60).toFixed(2) : 'N/A'}%</p>
+          <p>คะแนนร่วม (ราคา + ประเมิน): {(
+            (priceScoreB !== null ? parseFloat(priceScoreB.toFixed(2)) : 0) +
+            (averageScoreB !== null ? parseFloat((averageScoreB / 100 * 60).toFixed(2)) : 0)
+          ).toFixed(2)}%</p>
+        </div>
+      )}
     </div>
   );
 }
