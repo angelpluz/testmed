@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Link from 'next/link'; // import Link
 
 export default function HomePage() {
   const [message] = useState('ยินดีต้อนรับสู่แบบสอบถามของเรา');
@@ -10,7 +11,11 @@ export default function HomePage() {
 
       {/* ลิงก์ไปยังหน้าแบบสอบถาม */}
       <ul>
-        <li><a href="/forms">ไปที่แบบสอบถาม</a></li>
+        <li>
+          <Link href="/forms">
+            <a>ไปที่แบบสอบถาม</a>
+          </Link>
+        </li>
       </ul>
     </div>
   );
